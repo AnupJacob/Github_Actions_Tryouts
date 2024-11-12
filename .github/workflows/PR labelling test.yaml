@@ -1,6 +1,11 @@
 name: Label Draft PRs Test
 
-on: [push, workflow_dispatch]
+on: 
+  push:
+  workflow_dispatch:
+  pull_request:
+    types: [ready_for_review, converted_to_draft]
+
 
 jobs:
   label-draft-pr:
@@ -25,11 +30,20 @@ jobs:
         run: |
           echo '${{ steps.fetch_prs.outputs.data }}' > pr_data.json
 
-      - name: Label draft pull requests
+      - name: Label or unlabel draft pull requests
         run: |
-          # Parse PR numbers of draft PRs and add the "draft" label
-          for pr in $(jq -r '.[] | select(.draft == true) | .number' pr_data.json); do
-            gh pr edit "$pr" --add-label "draft" --repo "${{ github.repository }}"
+          for pr in $(jq -r '.[] | .number' pr_data.json); do
+            is_draft=$(jq -r ".[] | select(.number == $pr) | .draft" pr_data.json)
+            has_draft_label=$(gh pr view "$pr" --json labels --jq '.labels | map(.name) | contains(["draft"])')
+
+            if [[ "$is_draft" == "true" && "$has_draft_label" == "false" ]]; then
+              echo "Adding 'draft' label to PR #$pr"
+              gh pr edit "$pr" --add-label "draft" --repo "${{ github.repository }}"
+
+            elif [[ "$is_draft" == "false" && "$has_draft_label" == "true" ]]; then
+              echo "Removing 'draft' label from PR #$pr"
+              gh pr edit "$pr" --remove-label "draft" --repo "${{ github.repository }}"
+            fi
           done
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
