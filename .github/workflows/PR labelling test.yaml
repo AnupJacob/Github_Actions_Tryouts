@@ -6,6 +6,8 @@ on:
 jobs:
   label-draft-pr:
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -26,5 +28,3 @@ jobs:
           for pr in $(jq -r '.[] | select(.draft == true) | .number' <<< "${{ steps.fetch_prs.outputs.data }}"); do
             gh pr edit "$pr" --add-label "draft"
           done
-        env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
