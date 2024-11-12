@@ -27,4 +27,4 @@ jobs:
             gh pr edit "$pr" --add-label "draft"
           done
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
