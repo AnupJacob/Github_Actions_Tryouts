@@ -1,6 +1,5 @@
 name: Label Draft PRs Test
 
-
 on: [push, workflow_dispatch]
 
 jobs:
@@ -18,14 +17,19 @@ jobs:
         uses: octokit/request-action@v2.x
         with:
           route: GET /repos/${{ github.repository }}/pulls
-          # This query returns only open PRs
           query: |
             state=open
             per_page=100
 
-      - name: Label draft pull requests
-        if: success()
+      - name: Save PR data to file
         run: |
-          for pr in $(jq -r '.[] | select(.draft == true) | .number' <<< "${{ steps.fetch_prs.outputs.data }}"); do
-            gh pr edit "$pr" --add-label "draft"
+          echo '${{ steps.fetch_prs.outputs.data }}' > pr_data.json
+
+      - name: Label draft pull requests
+        run: |
+          # Parse PR numbers of draft PRs and add the "draft" label
+          for pr in $(jq -r '.[] | select(.draft == true) | .number' pr_data.json); do
+            gh pr edit "$pr" --add-label "draft" --repo "${{ github.repository }}"
           done
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
