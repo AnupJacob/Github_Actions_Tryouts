@@ -1,4 +1,4 @@
-name: Label Draft PRs
+name: Label Draft PRs Test
 
 on:
   push:
