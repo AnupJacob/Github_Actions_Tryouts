@@ -1,0 +1,30 @@
+name: Label Draft PRs
+
+on:
+  push:
+
+jobs:
+  label-draft-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Fetch open pull requests
+        id: fetch_prs
+        uses: octokit/request-action@v2.x
+        with:
+          route: GET /repos/${{ github.repository }}/pulls
+          # This query returns only open PRs
+          query: |
+            state=open
+            per_page=100
+
+      - name: Label draft pull requests
+        if: success()
+        run: |
+          for pr in $(jq -r '.[] | select(.draft == true) | .number' <<< "${{ steps.fetch_prs.outputs.data }}"); do
+            gh pr edit "$pr" --add-label "draft"
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
