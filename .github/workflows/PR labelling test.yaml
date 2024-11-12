@@ -2,6 +2,7 @@ name: Label Draft PRs
 
 on:
   push:
+  workflow_dispatch:
 
 jobs:
   label-draft-pr:
